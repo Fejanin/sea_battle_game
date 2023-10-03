@@ -3,7 +3,7 @@ class Ship:
         self._length = length # длина корабля (число палуб)
         self._x = x # координаты корабля (целые значения в диапазоне [0; size), где size - размер игрового поля)
         self._y = y # координаты корабля (целые значения в диапазоне [0; size), где size - размер игрового поля)
-        self._tp = tp # ориентация корабля
+        self._tp = tp # ориентация корабля; (1 - горизонтальная; 2 - вертикальная)
         self._is_move = True # возможно ли перемещение корабля (изначально равно True)
         self._cells = [1 for i in range(self._length)] # изначально список длиной length, состоящий из единиц (например, при length=3, _cells = [1, 1, 1]).
         # Список _cells будет сигнализировать о попадании соперником в какую-либо палубу корабля. Если стоит 1, то попадания 
@@ -11,33 +11,54 @@ class Ship:
 
     def set_start_coords(self, x, y):
         # установка начальных координат (запись значений в локальные атрибуты _x, _y)
-        pass
+        self._x = x
+        self._y = y
 
     def get_start_coords(self):
         # получение начальных координат корабля в виде кортежа x, y
-        pass
+        return self._x, self._y
 
     def move(self, go):
         # перемещение корабля в направлении его ориентации на go клеток (go = 1 - движение в одну сторону на клетку;
         # go = -1 - движение в другую сторону на одну клетку); движение возможно только если флаг _is_move = True
-        pass
+        if self._tp == 1:
+            self._x += go
+        else:
+            self._y += go
 
     def is_collide(self, ship):
         # проверка на столкновение с другим кораблем ship (столкновением считается, если другой корабль или 
         # пересекается с текущим или просто соприкасается, в том числе и по диагонали); метод возвращает True, если столкновение 
         # есть и False - в противном случае;
-        pass
+        for i in self.get_all_coords():
+            if i in ship.get_all_coords():
+                return True
+        return False
 
     def is_out_pole(self, size):
         # проверка на выход корабля за пределы игрового поля (size - размер игрового поля, обычно, size = 10); 
         # возвращается булево значение True, если корабль вышел из игрового поля и False - в противном случае
-        pass
+        if self._x < 1 or self._y < 1:
+            return True
+        if self._tp == 1:
+            if self._x + self._length - 1 > size:
+                return True
+        else:
+            if self._y + self._length - 1 > size:
+                return True
+        return False
 
     def __getitem__(self):
         # С помощью магических методов __getitem__() и __setitem__() обеспечить доступ к коллекции _cells следующим образом:
         # value = ship[indx] # считывание значения из _cells по индексу indx (индекс отсчитывается от 0)
         # ship[indx] = value # запись нового значения в коллекцию _cells
         pass
+
+    def get_all_coords(self):
+        if self._tp == 1:
+            return [(self._x + i, self._y) for i in range(self._length)]
+        else:
+            return [(self._x, self._y + i) for i in range(self._length)]
 
 
 class GamePole:
