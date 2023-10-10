@@ -1,3 +1,5 @@
+from random import randint
+
 class Ship:
     def __init__(self, length, tp=1, x=None, y=None):
         self._length = length # длина корабля (число палуб)
@@ -31,7 +33,11 @@ class Ship:
         # пересекается с текущим или просто соприкасается, в том числе и по диагонали); метод возвращает True, если столкновение 
         # есть и False - в противном случае;
         for i in self.get_all_coords():
-            if i in ship.get_all_coords():
+            test_coords = []
+            for j in ship.get_all_coords():
+                test_coords += [j, (j[0], j[1] + 1), (j[0], j[1] - 1), (j[0] + 1, j[1]), (j[0] - 1, j[1]),
+                                (j[0] + 1, j[1] + 1), (j[0] - 1, j[1] - 1), (j[0] + 1, j[1] - 1), (j[0] - 1, j[1] + 1)]
+            if i in test_coords:
                 return True
         return False
 
@@ -48,23 +54,28 @@ class Ship:
                 return True
         return False
 
-    def __getitem__(self):
+    def __getitem__(self, ind):
         # С помощью магических методов __getitem__() и __setitem__() обеспечить доступ к коллекции _cells следующим образом:
         # value = ship[indx] # считывание значения из _cells по индексу indx (индекс отсчитывается от 0)
         # ship[indx] = value # запись нового значения в коллекцию _cells
-        pass
+        return self._cells[ind]
+
+    def __setitem__(self, ind, value):
+        self._cells[ind] = value
 
     def get_all_coords(self):
-        if self._tp == 1:
-            return [(self._x + i, self._y) for i in range(self._length)]
-        else:
-            return [(self._x, self._y + i) for i in range(self._length)]
+        if self._x and self._y:
+            if self._tp == 1:
+                return [(self._x + i, self._y) for i in range(self._length)]
+            else:
+                return [(self._x, self._y + i) for i in range(self._length)]
 
 
 class GamePole:
     def __init__(self, size=10):
         self._size = size
         self._ships = []
+        self.pole = [['0' for _ in range(self._size)] for _ in range(self._size)]
 
     def init(self):
         # однопалубных - 4; двухпалубных - 3; трехпалубных - 2; четырехпалубный - 1 (ориентация этих кораблей должна быть случайной)
@@ -75,11 +86,48 @@ class GamePole:
         # Начальные координаты x, y не расставленных кораблей равны None.
         # После этого, выполняется их расстановка на игровом поле со случайными координатами так, чтобы корабли не пересекались 
         # между собой.
-        pass
+        self.pole = [['0' for _ in range(self._size)] for _ in range(self._size)]
+        self._ships = [Ship(4, tp=randint(1, 2)),
+                        Ship(3, tp=randint(1, 2)),
+                        Ship(3, tp=randint(1, 2)),
+                        Ship(2, tp=randint(1, 2)),
+                        Ship(2, tp=randint(1, 2)),
+                        Ship(2, tp=randint(1, 2)),
+                        Ship(1, tp=randint(1, 2)),
+                        Ship(1, tp=randint(1, 2)),
+                        Ship(1, tp=randint(1, 2)),
+                        Ship(1, tp=randint(1, 2))]
+        self.arrange_ships()
+
+    def arrange_ships(self):
+        for ind in range(len(self._ships)):
+            if ind == 0:
+                while True:
+                    x = randint(1, self._size)
+                    y = randint(1, self._size)
+                    self._ships[ind].set_start_coords(x, y)
+                    if self._ships[ind].is_out_pole(self._size):
+                        continue
+                    break
+            else:
+                while True:
+                    # break
+                    x = randint(1, self._size)
+                    y = randint(1, self._size)
+                    self._ships[ind].set_start_coords(x, y)
+                    if self._ships[ind].is_out_pole(self._size):
+                        continue
+                    for j in range(ind):
+                        if self._ships[ind].is_collide(self._ships[j]):
+                            break
+                    else:
+                        break
+                    
+                    
 
     def get_ships(self):
         # возвращает коллекцию _ships
-        pass
+        return self._ships
 
     def move_ships(self):
         # перемещает каждый корабль из коллекции _ships на одну клетку (случайным образом вперед или назад) в 
@@ -90,7 +138,18 @@ class GamePole:
     def show(self):
         # отображение игрового поля в консоли (корабли должны отображаться значениями из коллекции _cells каждого корабля, 
         # вода - значением 0)
-        pass
+        # TODO расставить корабли
+        for ship in self._ships:
+            x, y = ship.get_start_coords()
+            if x and y:
+                if ship._tp == 1:
+                    for i in range(len(ship._cells)):
+                        self.pole[y - 1][x - 1 + i] = ship._cells[i]
+                else:
+                    for i in range(len(ship._cells)):
+                        self.pole[y - 1 + i][x - 1] = ship._cells[i]
+        for i in self.pole:
+            print(*i, sep='')
 
     def get_pole(self):
         # получение текущего игрового поля в виде двумерного (вложенного) кортежа размерами size x size элементов
@@ -98,8 +157,11 @@ class GamePole:
 
 
 
-
-
+gp = GamePole()
+gp.init()
+print('-' * 50)
+gp.show()
+print('-' * 50)
 
 '''
 Пример отображения игрового поля:
@@ -116,6 +178,9 @@ class GamePole:
 0 0 0 0 0 0 0 1 1 0
 '''
 
+
+
+'''
 # Пример использования классов (эти строчки в программе не писать):
 
 SIZE_GAME_POLE = 10
@@ -127,5 +192,5 @@ pole.show()
 pole.move_ships()
 print()
 pole.show()
-
+'''
 
